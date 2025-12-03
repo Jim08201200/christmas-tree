@@ -552,6 +552,48 @@ export default function GrandTreeApp() {
       <div style={{ position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', color: aiStatus.includes('ERROR') ? '#FF0000' : 'rgba(255, 215, 0, 0.4)', fontSize: '10px', letterSpacing: '2px', zIndex: 10, background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px' }}>
         {aiStatus}
       </div>
+      {/* --- 音乐播放器开始 --- */}
+      <audio id="bgm" loop>
+        {/* 注意：这里用相对路径 ./bgm.mp3 确保部署后能找到 */}
+        <source src="./bgm.mp3" type="audio/mpeg" />
+      </audio>
+      
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '20px',
+          zIndex: 99999, // 保证在最上层
+          cursor: 'pointer',
+          background: 'rgba(255, 255, 255, 0.1)', // 半透明背景
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          padding: '10px 20px',
+          borderRadius: '50px',
+          color: 'white',
+          fontSize: '14px',
+          backdropFilter: 'blur(10px)', // 毛玻璃效果
+          display: 'flex',
+          alignItems: 'center',
+          gap: '5px',
+          userSelect: 'none'
+        }}
+        onClick={(e) => {
+          const audio = document.getElementById('bgm') as HTMLAudioElement;
+          const btn = e.currentTarget;
+          if (audio.paused) {
+            audio.play();
+            btn.innerHTML = '🎵 暂停音乐';
+            btn.style.background = 'rgba(0, 255, 100, 0.2)'; // 播放时变绿
+          } else {
+            audio.pause();
+            btn.innerHTML = '🎵 播放音乐';
+            btn.style.background = 'rgba(255, 255, 255, 0.1)';
+          }
+        }}
+      >
+        🎵 播放音乐
+      </div>
+      {/* --- 音乐播放器结束 --- */}
     </div>
   );
 }
