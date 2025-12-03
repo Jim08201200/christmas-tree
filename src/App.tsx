@@ -186,7 +186,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       group.position.copy(objData.currentPos);
 
       if (isFormed) {
-         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 3.0, group.position.z * 2);
+         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 3.5, group.position.z * 2);
          group.lookAt(targetLookPos);
 
          const wobbleX = Math.sin(time * objData.wobbleSpeed + objData.wobbleOffset) * 0.05;
