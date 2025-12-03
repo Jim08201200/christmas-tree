@@ -615,17 +615,7 @@ export default function GrandTreeApp() {
           {/* 按钮区域 */}
           <div 
           
-
-
-            
-              
-             
-              
-            
-              
-             
-                
-  onClick={handleStart} 
+onClick={handleStart} 
             style={{ 
               padding: '15px 40px', 
               fontSize: '24px', 
@@ -633,14 +623,19 @@ export default function GrandTreeApp() {
               border: progress === 100 ? '2px solid gold' : '2px solid #666', 
               borderRadius: '50px', 
               cursor: progress === 100 ? 'pointer' : 'wait', 
-              
+              background: progress === 100 ? 'rgba(255, 215, 0, 0.2)' : 'transparent', 
               transition: 'all 0.3s', 
               userSelect: 'none', 
-              
+              boxShadow: progress === 100 ? '0 0 30px rgba(255, 215, 0, 0.6)' : 'none' 
 
-           background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
-              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
+            
               
+             
+              
+            
+              
+             
+            
             }}
           >
              {progress === 100 ? "点击开启圣诞之旅" : `正在搬运圣诞树... ${progress.toFixed(0)}%`}
