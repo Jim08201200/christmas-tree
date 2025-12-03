@@ -79,7 +79,8 @@ extend({ FoliageMaterial });
 // --- Helper: Tree Shape ---
 const getTreePosition = () => {
   const h = CONFIG.tree.height; const rBase = CONFIG.tree.radius;
-  const y = (Math.random() * h) - (h / 2); const normalizedY = (y + (h/2)) / h;
+  // 1.8 这个数字越大，照片就越往底下沉。你可以试试 1.5 到 2.5 之间的数字
+const y = (Math.pow(Math.random(), 1.8) * h) - (h / 2);
   const currentRadius = rBase * (1 - normalizedY); const theta = Math.random() * Math.PI * 2;
   const r = Math.random() * currentRadius;
   return [r * Math.cos(theta), y, r * Math.sin(theta)];
