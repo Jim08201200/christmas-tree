@@ -548,34 +548,33 @@ export default function GrandTreeApp() {
         </button>
       </div>
 
-      {/* UI - AI Status */}
-      <div style={{ position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', color: aiStatus.includes('ERROR') ? '#FF0000' : 'rgba(255, 215, 0, 0.4)', fontSize: '10px', letterSpacing: '2px', zIndex: 10, background: 'rgba(0,0,0,0.5)', padding: '4px 8px', borderRadius: '4px' }}>
-        {aiStatus}
-      </div>
-      {/* --- 音乐播放器开始 --- */}
+{/* ================= 音乐控制系统 Start ================= */}
+      
+      {/* 1. 隐藏的音频源 */}
       <audio id="bgm" loop>
-        {/* 注意：这里用相对路径 ./bgm.mp3 确保部署后能找到 */}
         <source src="./bgm.mp3" type="audio/mpeg" />
       </audio>
-      
+
+      {/* 2. 左下角的常驻小按钮 (默认显示“暂停”状态，等大按钮点击后会变) */}
       <div
+        id="mini-music-btn"
         style={{
           position: 'fixed',
           bottom: '20px',
           left: '20px',
-          zIndex: 99999, // 保证在最上层
+          zIndex: 1000, 
           cursor: 'pointer',
-          background: 'rgba(255, 255, 255, 0.1)', // 半透明背景
+          background: 'rgba(255, 255, 255, 0.1)',
           border: '1px solid rgba(255, 255, 255, 0.3)',
           padding: '10px 20px',
           borderRadius: '50px',
           color: 'white',
           fontSize: '14px',
-          backdropFilter: 'blur(10px)', // 毛玻璃效果
+          backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
-          gap: '5px',
-          userSelect: 'none'
+          userSelect: 'none',
+          transition: 'all 0.3s'
         }}
         onClick={(e) => {
           const audio = document.getElementById('bgm') as HTMLAudioElement;
@@ -583,7 +582,7 @@ export default function GrandTreeApp() {
           if (audio.paused) {
             audio.play();
             btn.innerHTML = '🎵 暂停音乐';
-            btn.style.background = 'rgba(0, 255, 100, 0.2)'; // 播放时变绿
+            btn.style.background = 'rgba(0, 255, 100, 0.2)';
           } else {
             audio.pause();
             btn.innerHTML = '🎵 播放音乐';
@@ -593,7 +592,78 @@ export default function GrandTreeApp() {
       >
         🎵 播放音乐
       </div>
-      {/* --- 音乐播放器结束 --- */}
+
+      {/* 3. 开场全屏大封面 (点击后自己消失) */}
+      <div
+        id="start-screen"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 99999, // 保证在最最上层
+          background: 'rgba(0, 0, 0, 0.85)', // 深色背景遮罩
+          backdropFilter: 'blur(8px)', // 背景模糊
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          transition: 'opacity 0.8s', // 消失时的淡出动画
+        }}
+      >
+        <h1 style={{ color: 'white', marginBottom: '40px', fontSize: '3rem', fontFamily: 'serif', textShadow: '0 0 20px gold' }}>
+          🎄 Merry Christmas
+        </h1>
+        
+        <div
+          style={{
+            padding: '15px 40px',
+            fontSize: '24px',
+            color: 'white',
+            border: '2px solid gold',
+            borderRadius: '50px',
+            cursor: 'pointer',
+            background: 'rgba(255, 215, 0, 0.2)',
+            boxShadow: '0 0 30px rgba(255, 215, 0, 0.4)',
+            userSelect: 'none'
+          }}
+          onClick={(e) => {
+            // 1. 播放音乐
+            const audio = document.getElementById('bgm') as HTMLAudioElement;
+            audio.play().catch(() => console.log('Wait for interaction'));
+            
+            // 2. 更新左下角小按钮的状态为“播放中”
+            const miniBtn = document.getElementById('mini-music-btn');
+            if(miniBtn) {
+              miniBtn.innerHTML = '🎵 暂停音乐';
+              miniBtn.style.background = 'rgba(0, 255, 100, 0.2)';
+            }
+
+            // 3. 淡出并移除这个大封面
+            const screen = document.getElementById('start-screen');
+            if(screen) {
+              screen.style.opacity = '0'; // 先变透明
+              screen.style.pointerEvents = 'none'; // 禁止点击
+              // 0.8秒后彻底移除
+              setTimeout(() => {
+                screen.style.display = 'none';
+              }, 800);
+            }
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.5)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.2)'}
+        >
+          🎁 点击开启圣诞之旅
+        </div>
+        
+        <p style={{ color: '#aaa', marginTop: '20px', fontSize: '14px' }}>
+           戴上耳机体验最佳效果 🎧
+        </p>
+      </div>
+      
+      {/* ================= 音乐控制系统 End ================= */}
+      
     </div>
   );
 }
