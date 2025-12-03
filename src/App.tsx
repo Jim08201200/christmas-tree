@@ -41,7 +41,7 @@ const CONFIG = {
   },
   counts: {
     foliage: 15000,
-    ornaments: 200,
+    ornaments: 150,
     elements: 200,
     lights: 500
   },
@@ -616,20 +616,30 @@ export default function GrandTreeApp() {
           <div 
           
 
-onClick={handleStart}
-            style={{
-              border: progress === 100 ? '2px solid gold' : '2px solid #666',
-              borderRadius: '50px',
-              background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
-              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
-              cursor: progress === 100 ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s',
-              opacity: progress === 100 ? 1 : 0.6,
-              marginTop: '20px',
-              userSelect: 'none',
-              fontSize: '24px',
-              color: 'black'
 
+            
+              
+             
+              
+            
+              
+             
+                
+  onClick={handleStart} 
+            style={{ 
+              padding: '15px 40px', 
+              fontSize: '24px', 
+              color: 'white', 
+              border: progress === 100 ? '2px solid gold' : '2px solid #666', 
+              borderRadius: '50px', 
+              cursor: progress === 100 ? 'pointer' : 'wait', 
+              
+              transition: 'all 0.3s', 
+              userSelect: 'none', 
+              
+
+           background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
+              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
               
             }}
           >
