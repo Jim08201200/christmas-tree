@@ -3,6 +3,7 @@ import { Canvas, useFrame, extend } from '@react-three/fiber';
 import {
   OrbitControls,
   Environment,
+  useProgress,
   PerspectiveCamera,
   shaderMaterial,
   Float,
@@ -509,6 +510,10 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
 // --- App Entry ---
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('FORMED');
+
+  // 获取资源加载进度 (0 到 100 的数字)
+  const { progress } = useProgress();
+
   
     // 1. 定义一个“记忆”开关，默认是 false (没玩过)
   const [hasPlayed, setHasPlayed] = useState(false);
@@ -653,7 +658,22 @@ export default function GrandTreeApp() {
           transition: 'opacity 0.8s', // 消失时的淡出动画
         }}
       >
-        <h1 style={{ color: 'white', marginBottom: '40px', fontSize: '3rem', fontFamily: 'serif', textShadow: '0 0 20px gold' }}>
+        
+        <h1 
+          style={{ 
+            color: 'white', 
+            marginBottom: '40px', 
+            fontSize: '3rem', 
+            fontFamily: 'serif', 
+            textShadow: '0 0 20px gold',
+            // 👇👇👇 新增这两行 👇👇👇
+            textAlign: 'center', // 强制文字水平居中
+            width: '100%',       // 占满整行宽度，防止被挤到一边
+            // 👆👆👆 新增这两行 👆👆👆
+            padding: '0 20px',   // 防止手机端字太大了贴边
+            lineHeight: '1.2'    // 调整一下行高更美观
+          }}
+        >
           🎄 Merry Christmas
         </h1>
         
@@ -662,40 +682,46 @@ export default function GrandTreeApp() {
             padding: '15px 40px',
             fontSize: '24px',
             color: 'white',
-            border: '2px solid gold',
+            border: progress === 100 ? '2px solid gold' : '2px solid #666', // 加载完是金色，没加载完是灰色
             borderRadius: '50px',
-            cursor: 'pointer',
-            background: 'rgba(255, 215, 0, 0.2)',
-            boxShadow: '0 0 30px rgba(255, 215, 0, 0.4)',
-            userSelect: 'none'
+            cursor: progress === 100 ? 'pointer' : 'not-allowed', // 没加载完鼠标显示禁止符号
+            background: progress === 100 ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
+            boxShadow: progress === 100 ? '0 0 30px rgba(255, 215, 0, 0.4)' : 'none',
+            userSelect: 'none',
+            transition: 'all 0.3s'
           }}
           onClick={(e) => {
-            // 1. 播放音乐
+            // 🔴 关键判断：只有进度到了 100 才允许点击
+            if (progress < 100) return; 
+
+            // 下面是原来的播放逻辑，不用变
             const audio = document.getElementById('bgm') as HTMLAudioElement;
             audio.play().catch(() => console.log('Wait for interaction'));
             
-            // 2. 更新左下角小按钮的状态为“播放中”
             const miniBtn = document.getElementById('mini-music-btn');
             if(miniBtn) {
               miniBtn.innerHTML = '🎵 暂停音乐';
               miniBtn.style.background = 'rgba(0, 255, 100, 0.2)';
             }
 
-            // 3. 淡出并移除这个大封面
             const screen = document.getElementById('start-screen');
             if(screen) {
-              screen.style.opacity = '0'; // 先变透明
-              screen.style.pointerEvents = 'none'; // 禁止点击
-              // 0.8秒后彻底移除
+              screen.style.opacity = '0';
+              screen.style.pointerEvents = 'none';
               setTimeout(() => {
                 screen.style.display = 'none';
               }, 800);
             }
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.5)'}
-          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 215, 0, 0.2)'}
+          onMouseOver={(e) => {
+             if (progress === 100) e.currentTarget.style.background = 'rgba(255, 215, 0, 0.5)'
+          }}
+          onMouseOut={(e) => {
+             if (progress === 100) e.currentTarget.style.background = 'rgba(255, 215, 0, 0.2)'
+          }}
         >
-          🎁 点击开启圣诞之旅
+          {/* 🔴 按钮文字也变成动态的 */}
+          {progress === 100 ? '🎁 点击开启圣诞之旅' : `⏳ 正在搬运圣诞树... ${progress.toFixed(0)}%`}
         </div>
         
         <p style={{ color: '#aaa', marginTop: '20px', fontSize: '14px' }}>
