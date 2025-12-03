@@ -130,12 +130,26 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const borderGeometry = useMemo(() => new THREE.PlaneGeometry(1.2, 1.5), []);
   const photoGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
-  const data = useMemo(() => {
+ const data = useMemo(() => {
     return new Array(count).fill(0).map((_, i) => {
       const chaosPos = new THREE.Vector3((Math.random()-0.5)*70, (Math.random()-0.5)*70, (Math.random()-0.5)*70);
-      const h = CONFIG.tree.height; const y = (Math.random() * h) - (h / 2);
+      
+      // --- 这里是修改后的核心算法 ---
+      const h = CONFIG.tree.height;
+      
+      // 1. 生成一个 0 到 1 之间的系数。
+      // Math.pow(..., 2.5) 这个指数越大，照片越集中在底部。
+      // 你可以调整 2.5 这个数字：(1.5 = 稍微集中底部, 3.0 = 极度集中底部)
+      const pct = Math.pow(Math.random(), 2.0); 
+      
+      // 2. 计算 Y 轴高度：0对应底部(-h/2)，1对应顶部(h/2)
+      const y = (pct * h) - (h / 2);
+      
+      // 3. 计算半径：底部(pct=0)最宽，顶部(pct=1)最窄
       const rBase = CONFIG.tree.radius;
-      const currentRadius = (rBase * (1 - (y + (h/2)) / h)) + 0.5;
+      const currentRadius = (rBase * (1 - pct)) + 0.5;
+      // ---------------------------
+
       const theta = Math.random() * Math.PI * 2;
       const targetPos = new THREE.Vector3(currentRadius * Math.cos(theta), y, currentRadius * Math.sin(theta));
 
