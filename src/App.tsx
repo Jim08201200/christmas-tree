@@ -503,12 +503,13 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: 
 };
 
 // --- App Entry ---
+// --- App Entry ---
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('FORMED');
   const { progress } = useProgress();
   const [hasPlayed, setHasPlayed] = useState(false);
   
-  // 🔴 关键修改：新增一个状态，标记是否已点击开始按钮
+  // 控制是否点击了开始按钮
   const [isStarted, setIsStarted] = useState(false);
 
   useEffect(() => {
@@ -521,6 +522,20 @@ export default function GrandTreeApp() {
   const [aiStatus, setAiStatus] = useState("INITIALIZING...");
   const [debugMode, setDebugMode] = useState(false);
 
+  // 处理点击开始的逻辑
+  const handleStart = () => {
+    if (progress === 100) {
+      // 1. 隐藏封面（这里简单处理，直接通过状态移除，如果想要淡出效果可以用样式控制）
+      setIsStarted(true);
+      
+      // 2. 尝试自动播放音乐（部分浏览器可能仍需用户交互）
+      const audio = document.getElementById('bgm') as HTMLAudioElement;
+      if (audio) {
+        audio.play().catch(e => console.log("Autoplay blocked", e));
+      }
+    }
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', position: 'relative', overflow: 'hidden' }}>
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }}>
@@ -529,7 +544,7 @@ export default function GrandTreeApp() {
         </Canvas>
       </div>
       
-      {/* 🔴 关键修改：将 isStarted 传递给 GestureController */}
+      {/* 将 isStarted 传递给 AI 控制器，只有 true 时才启动摄像头 */}
       <GestureController 
         onGesture={setSceneState} 
         onMove={setRotationSpeed} 
@@ -538,7 +553,7 @@ export default function GrandTreeApp() {
         started={isStarted} 
       />
 
-      {/* UI - Stats */}
+      {/* UI - 左下角统计 */}
       <div style={{ position: 'absolute', bottom: '30px', left: '40px', color: '#888', zIndex: 10, fontFamily: 'sans-serif', userSelect: 'none' }}>
         <div style={{ marginBottom: '15px' }}>
           <p style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>Memories</p>
@@ -554,7 +569,7 @@ export default function GrandTreeApp() {
         </div>
       </div>
 
-      {/* UI - Buttons */}
+      {/* UI - 右下角按钮 */}
       <div style={{ position: 'absolute', bottom: '30px', right: '40px', zIndex: 10, display: 'flex', gap: '10px' }}>
         <button onClick={() => setDebugMode(!debugMode)} style={{ padding: '12px 15px', backgroundColor: debugMode ? '#FFD700' : 'rgba(0,0,0,0.5)', border: '1px solid #FFD700', color: debugMode ? '#000' : '#FFD700', fontFamily: 'sans-serif', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
            {debugMode ? 'HIDE DEBUG' : '🛠 DEBUG'}
@@ -564,7 +579,7 @@ export default function GrandTreeApp() {
         </button>
       </div>
 
-      {/* 提示文字 */}
+      {/* 提示文字 - 仅在开始后且未播放过时显示 */}
       {sceneState === 'FORMED' && !hasPlayed && isStarted && (
         <div
           style={{
@@ -587,7 +602,7 @@ export default function GrandTreeApp() {
         </div>
       )}
 
-      {/* 音乐控制系统 */}
+      {/* 音乐系统 */}
       <audio id="bgm" loop>
         <source src="./bgm.mp3" type="audio/mpeg" />
       </audio>
@@ -629,46 +644,46 @@ export default function GrandTreeApp() {
         🎵 播放音乐
       </div>
 
-      {/* 开场全屏大封面 */}
-      <div
-        id="start-screen"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 99999, 
-          background: 'rgba(0, 0, 0, 0.85)', 
-          backdropFilter: 'blur(8px)', 
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          transition: 'opacity 0.8s', 
-        }}
-      >
-        
-        <h1 
-          style={{ 
-            color: 'white', 
-            marginBottom: '40px', 
-            fontSize: '3rem', 
-            fontFamily: 'serif', 
-            textShadow: '0 0 20px gold',
-            textAlign: 'center', 
-            width: '100%',       
-            padding: '0 20px',   
-            lineHeight: '1.2'    
+      {/* 开场全屏大封面 - 只在未开始(isStarted为false)时显示 */}
+      {!isStarted && (
+        <div
+          id="start-screen"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 99999, 
+            background: 'rgba(0, 0, 0, 0.9)', 
+            backdropFilter: 'blur(10px)', 
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transition: 'opacity 0.5s', 
           }}
         >
-          🎄 Merry Christmas
-        </h1>
-        
-        <div
-          style={{
-            padding: '15px 40px',
-            fontSize: '24px',
-            color: 'white',
-            border: progress === 100 ? '2px solid gold' : '2px solid #666', 
-            borderRadius: '50
+          <h1 
+            style={{ 
+              color: 'white', 
+              marginBottom: '40px', 
+              fontSize: '3rem', 
+              fontFamily: 'serif', 
+              textShadow: '0 0 20px gold',
+              textAlign: 'center', 
+              width: '100%',       
+              padding: '0 20px',   
+              lineHeight: '1.2'    
+            }}
+          >
+            🎄 Merry Christmas
+          </h1>
+          
+          <div
+            onClick={handleStart}
+            style={{
+              padding: '15px 40px',
+              fontSize: '24px',
+              color: 'white',
+              border: progress === 100 ?
