@@ -410,7 +410,7 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
       <pointLight position={[0, -20, 10]} intensity={30} color="#ffffff" />
 
       {/* 调整位置：将 Y 设为 -1，让树更居中 */}
-      <group position={[0, -2, 0]}>
+      <group position={[0, -3, 0]}>
         <Foliage state={sceneState} />
         <Suspense fallback={null}>
            <PhotoOrnaments state={sceneState} />
