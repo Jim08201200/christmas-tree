@@ -18,7 +18,7 @@ import * as random from 'maath/random';
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
 // --- 动态生成照片列表 (top.jpg + 1.jpg 到 31.jpg) ---
-const TOTAL_NUMBERED_PHOTOS = 24;
+const TOTAL_NUMBERED_PHOTOS = 31;
 const bodyPhotoPaths = [
   './photos/top.jpg',
   ...Array.from({ length: TOTAL_NUMBERED_PHOTOS }, (_, i) => `./photos/${i + 1}.jpg`)
@@ -43,7 +43,7 @@ const CONFIG = {
     foliage: 15000,
     ornaments: 200,
     elements: 200,
-    lights: 600
+    lights: 500
   },
   tree: { height: 22, radius: 9 },
   photos: {
@@ -79,8 +79,7 @@ extend({ FoliageMaterial });
 // --- Helper: Tree Shape ---
 const getTreePosition = () => {
   const h = CONFIG.tree.height; const rBase = CONFIG.tree.radius;
-  // 1.8 这个数字越大，照片就越往底下沉。你可以试试 1.5 到 2.5 之间的数字
-const y = (Math.pow(Math.random(), 1.8) * h) - (h / 2);
+  const y = (Math.random() * h) - (h / 2); const normalizedY = (y + (h/2)) / h;
   const currentRadius = rBase * (1 - normalizedY); const theta = Math.random() * Math.PI * 2;
   const r = Math.random() * currentRadius;
   return [r * Math.cos(theta), y, r * Math.sin(theta)];
@@ -121,8 +120,7 @@ const Foliage = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   );
 };
 
-// --- Component: Photo Ornaments ---
-// --- Component: Photo Ornaments (已修复：照片底部多顶部少，且无报错) ---
+// --- Component: Photo Ornaments (已修复) ---
 const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const textures = useTexture(CONFIG.photos.body);
   const count = CONFIG.counts.ornaments;
@@ -135,29 +133,22 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
     return new Array(count).fill(0).map((_, i) => {
       const chaosPos = new THREE.Vector3((Math.random()-0.5)*70, (Math.random()-0.5)*70, (Math.random()-0.5)*70);
       
+      // --- 修复后的分布算法 ---
       const h = CONFIG.tree.height;
-      
-      // --- 核心修改开始 ---
-      // 1. 计算归一化高度 (0代表底部，1代表顶部)
-      // 使用 Math.pow(..., 2.5) 让数值更倾向于 0 (底部)
-      // 数字越大(比如3.0)，底部的照片就越密集
-      const normalizedY = Math.pow(Math.random(), 2.2); 
-
-      // 2. 根据归一化高度计算实际 Y 坐标
+      // 使用指数函数 Math.pow(random, 2.2) 让数值集中在 0 (底部)
+      const normalizedY = Math.pow(Math.random(), 2.2);
       const y = (normalizedY * h) - (h / 2);
 
-      // 3. 根据高度计算半径 (底部宽，顶部窄)
       const rBase = CONFIG.tree.radius;
       const currentRadius = (rBase * (1 - normalizedY)) + 0.5;
-      // --- 核心修改结束 ---
-
+      
       const theta = Math.random() * Math.PI * 2;
       const targetPos = new THREE.Vector3(currentRadius * Math.cos(theta), y, currentRadius * Math.sin(theta));
 
-      // 越靠近顶部(normalizedY接近1)，照片稍微变小一点，避免太拥挤
       const isBig = Math.random() < 0.2;
       let baseScale = isBig ? 2.2 : 0.8 + Math.random() * 0.6;
-      baseScale = baseScale * (1 - normalizedY * 0.3); // 顶部照片缩小30%
+      // 顶部照片稍微缩小，防止拥挤
+      baseScale = baseScale * (1 - normalizedY * 0.3);
 
       const weight = 0.8 + Math.random() * 1.2;
       const borderColor = CONFIG.colors.borders[Math.floor(Math.random() * CONFIG.colors.borders.length)];
@@ -418,7 +409,8 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
       <pointLight position={[-30, 10, -30]} intensity={50} color={CONFIG.colors.gold} />
       <pointLight position={[0, -20, 10]} intensity={30} color="#ffffff" />
 
-      <group position={[0, -3, 0]}>
+      {/* 调整位置：将 Y 设为 -1，让树更居中 */}
+      <group position={[0, -2, 0]}>
         <Foliage state={sceneState} />
         <Suspense fallback={null}>
            <PhotoOrnaments state={sceneState} />
@@ -437,21 +429,21 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
   );
 };
 
-// --- Gesture Controller (修改：增加 started 参数) ---
+// --- Gesture Controller (AI 手势识别控制器) ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // 🔴 关键修改：如果没点击开始，这里直接返回，不执行 AI 初始化
+    // 🔴 关键：如果还没点击“开启”，直接不执行任何 AI 加载逻辑
     if (!started) return;
 
     let gestureRecognizer: GestureRecognizer;
     let requestRef: number;
 
     const setup = async () => {
-      onStatus("DOWNLOADING AI...");
+      onStatus("正在启动 AI...");
       try {
         const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
         gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
@@ -462,20 +454,21 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: 
           runningMode: "VIDEO",
           numHands: 1
         });
-        onStatus("REQUESTING CAMERA...");
+        
+        onStatus("请求摄像头权限...");
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
             videoRef.current.play();
-            onStatus("AI READY: SHOW HAND");
+            onStatus("AI 准备就绪: 请展示手势");
             predictWebcam();
           }
         } else {
-            onStatus("ERROR: CAMERA PERMISSION DENIED");
+            onStatus("错误: 无法获取摄像头权限");
         }
       } catch (err: any) {
-        onStatus(`ERROR: ${err.message || 'MODEL FAILED'}`);
+        onStatus(`错误: ${err.message || '模型加载失败'}`);
       }
     };
 
@@ -498,20 +491,20 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: 
               const name = results.gestures[0][0].categoryName; const score = results.gestures[0][0].score;
               if (score > 0.4) {
                  if (name === "Open_Palm") onGesture("CHAOS"); if (name === "Closed_Fist") onGesture("FORMED");
-                 if (debugMode) onStatus(`DETECTED: ${name}`);
+                 if (debugMode) onStatus(`检测到手势: ${name}`);
               }
               if (results.landmarks.length > 0) {
                 const speed = (0.5 - results.landmarks[0][0].x) * 0.15;
                 onMove(Math.abs(speed) > 0.01 ? speed : 0);
               }
-            } else { onMove(0); if (debugMode) onStatus("AI READY: NO HAND"); }
+            } else { onMove(0); if (debugMode) onStatus("AI 运行中: 未检测到手"); }
         }
         requestRef = requestAnimationFrame(predictWebcam);
       }
     };
     setup();
     return () => cancelAnimationFrame(requestRef);
-  }, [onGesture, onMove, onStatus, debugMode, started]); // 🔴 依赖项加入 started
+  }, [onGesture, onMove, onStatus, debugMode, started]); // 依赖项包含 started
 
   return (
     <>
@@ -521,15 +514,12 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: 
   );
 };
 
-// --- App Entry ---
-// --- App Entry ---
+// --- App Entry (主程序入口) ---
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('FORMED');
-  const { progress } = useProgress();
+  const { progress } = useProgress(); // 获取加载进度
   const [hasPlayed, setHasPlayed] = useState(false);
-  
-  // 控制是否点击了开始按钮
-  const [isStarted, setIsStarted] = useState(false);
+  const [isStarted, setIsStarted] = useState(false); // 是否点击了开始
 
   useEffect(() => {
     if (sceneState === 'CHAOS') {
@@ -538,18 +528,17 @@ export default function GrandTreeApp() {
   }, [sceneState]);
   
   const [rotationSpeed, setRotationSpeed] = useState(0);
-  const [aiStatus, setAiStatus] = useState("INITIALIZING...");
+  const [aiStatus, setAiStatus] = useState("等待启动...");
   const [debugMode, setDebugMode] = useState(false);
 
-// --- 找到这一段 handleStart，完全替换为下面这样 ---
-const handleStart = () => {
+  // 处理点击开始按钮
+  const handleStart = () => {
     if (progress === 100) {
-      setIsStarted(true);
+      setIsStarted(true); // 隐藏封面，启动 AI
       const audio = document.getElementById('bgm') as HTMLAudioElement;
       if (audio) {
         audio.play().catch(() => {});
-        
-        // --- 新增：强制修改按钮文案和样式 ---
+        // 强制修改音乐按钮文案
         const btn = document.getElementById('mini-music-btn');
         if (btn) {
           btn.innerHTML = '🎵 暂停音乐';
@@ -559,20 +548,16 @@ const handleStart = () => {
     }
   };
 
-
-
-
-  
-
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', position: 'relative', overflow: 'hidden' }}>
+      {/* 3D 场景 */}
       <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, zIndex: 1 }}>
         <Canvas dpr={[1, 2]} gl={{ toneMapping: THREE.ReinhardToneMapping }} shadows>
             <Experience sceneState={sceneState} rotationSpeed={rotationSpeed} />
         </Canvas>
       </div>
       
-      {/* 将 isStarted 传递给 AI 控制器，只有 true 时才启动摄像头 */}
+      {/* 手势控制器：传入 started 状态 */}
       <GestureController 
         onGesture={setSceneState} 
         onMove={setRotationSpeed} 
@@ -581,7 +566,7 @@ const handleStart = () => {
         started={isStarted} 
       />
 
-      {/* UI - 左下角统计 */}
+      {/* 左下角文字 */}
       <div style={{ position: 'absolute', bottom: '30px', left: '40px', color: '#888', zIndex: 10, fontFamily: 'sans-serif', userSelect: 'none' }}>
         <div style={{ marginBottom: '15px' }}>
           <p style={{ fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>Memories</p>
@@ -597,137 +582,53 @@ const handleStart = () => {
         </div>
       </div>
 
-      {/* UI - 右下角按钮 */}
+      {/* 右下角按钮 (已移除 DEBUG 按钮) */}
       <div style={{ position: 'absolute', bottom: '30px', right: '40px', zIndex: 10, display: 'flex', gap: '10px' }}>
-        
         <button onClick={() => setSceneState(s => s === 'CHAOS' ? 'FORMED' : 'CHAOS')} style={{ padding: '12px 30px', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255, 215, 0, 0.5)', color: '#FFD700', fontFamily: 'serif', fontSize: '14px', fontWeight: 'bold', letterSpacing: '3px', textTransform: 'uppercase', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
            {sceneState === 'CHAOS' ? 'Assemble Tree' : 'Disperse'}
         </button>
       </div>
 
-      {/* 提示文字 - 仅在开始后且未播放过时显示 */}
+      {/* 中间提示 */}
       {sceneState === 'FORMED' && !hasPlayed && isStarted && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '15%', 
-            left: '50%',
-            transform: 'translateX(-50%)', 
-            zIndex: 50, 
-            color: '#fff',
-            fontSize: '18px',
-            fontWeight: 'bold',
-            textShadow: '0 2px 10px rgba(0,0,0,0.8)', 
-            pointerEvents: 'none', 
-            textAlign: 'center',
-            width: '90%',
-            animation: 'pulse 2s infinite'
-          }}
-        >
+        <div style={{ position: 'fixed', top: '15%', left: '50%', transform: 'translateX(-50%)', zIndex: 50, color: '#fff', fontSize: '18px', fontWeight: 'bold', textShadow: '0 2px 10px rgba(0,0,0,0.8)', pointerEvents: 'none', textAlign: 'center', width: '90%', animation: 'pulse 2s infinite' }}>
           请右手握成拳头，然后对着摄像头张开五指
         </div>
       )}
 
-      {/* 音乐系统 */}
+      {/* BGM */}
       <audio id="bgm" loop>
         <source src="./bgm.mp3" type="audio/mpeg" />
       </audio>
 
-      <div
-        id="mini-music-btn"
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '20px',
-          zIndex: 1000, 
-          cursor: 'pointer',
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.3)',
-          padding: '10px 20px',
-          borderRadius: '50px',
-          color: 'white',
-          fontSize: '14px',
-          backdropFilter: 'blur(10px)',
-          display: 'flex',
-          alignItems: 'center',
-          userSelect: 'none',
-          transition: 'all 0.3s'
-        }}
-        onClick={(e) => {
-          const audio = document.getElementById('bgm') as HTMLAudioElement;
-          const btn = e.currentTarget;
-          if (audio.paused) {
-            audio.play();
-            btn.innerHTML = '🎵 暂停音乐';
-            btn.style.background = 'rgba(0, 255, 100, 0.2)';
-          } else {
-            audio.pause();
-            btn.innerHTML = '🎵 播放音乐';
-            btn.style.background = 'rgba(255, 255, 255, 0.1)';
-          }
-        }}
-      >
+      <div id="mini-music-btn" style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 1000, cursor: 'pointer', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.3)', padding: '10px 20px', borderRadius: '50px', color: 'white', fontSize: '14px', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', userSelect: 'none', transition: 'all 0.3s' }} onClick={(e) => { const audio = document.getElementById('bgm') as HTMLAudioElement; const btn = e.currentTarget; if (audio.paused) { audio.play(); btn.innerHTML = '🎵 暂停音乐'; btn.style.background = 'rgba(0, 255, 100, 0.2)'; } else { audio.pause(); btn.innerHTML = '🎵 播放音乐'; btn.style.background = 'rgba(255, 255, 255, 0.1)'; } }}>
         🎵 播放音乐
       </div>
 
-      {/* 开场全屏大封面 - 只在未开始(isStarted为false)时显示 */}
+      {/* --- 启动封面 (Start Screen) --- */}
       {!isStarted && (
-        <div
-          id="start-screen"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            zIndex: 99999, 
-            background: 'rgba(0, 0, 0, 0.9)', 
-            backdropFilter: 'blur(10px)', 
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            transition: 'opacity 0.5s', 
-          }}
-        >
-          <h1 
-            style={{ 
-              color: 'white', 
-              marginBottom: '40px', 
-              fontSize: '3rem', 
-              fontFamily: 'serif', 
-              textShadow: '0 0 20px gold',
-              textAlign: 'center', 
-              width: '100%',       
-              padding: '0 20px',   
-              lineHeight: '1.2'    
-            }}
-          >
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', transition: 'opacity 0.5s' }}>
+          <h1 style={{ color: 'white', marginBottom: '40px', fontSize: '3rem', fontFamily: 'serif', textShadow: '0 0 20px gold', textAlign: 'center', width: '100%', padding: '0 20px', lineHeight: '1.2' }}>
             🎄 Merry Christmas
           </h1>
           
-          <div
-            onClick={handleStart}
-            style={{
-              padding: '15px 40px',
-              fontSize: '24px',
-              color: 'white',
-
-
-              
-              border: progress === 100 ? '2px solid gold' : '2px solid #666',
-              borderRadius: '50px',
-              background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
-              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
-              cursor: progress === 100 ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s',
-              opacity: progress === 100 ? 1 : 0.6,
-              marginTop: '20px',
-              userSelect: 'none'
+          {/* 按钮区域 */}
+          <div 
+            onClick={handleStart} 
+            style={{ 
+              padding: '15px 40px', 
+              fontSize: '24px', 
+              color: 'white', 
+              border: progress === 100 ? '2px solid gold' : '2px solid #666', 
+              borderRadius: '50px', 
+              cursor: progress === 100 ? 'pointer' : 'wait', 
+              background: progress === 100 ? 'rgba(255, 215, 0, 0.2)' : 'transparent', 
+              transition: 'all 0.3s', 
+              userSelect: 'none', 
+              boxShadow: progress === 100 ? '0 0 30px rgba(255, 215, 0, 0.6)' : 'none' 
             }}
-            disabled={progress !== 100}
           >
-            {progress === 100 ? '点击开启圣诞之旅' : `正在搬运圣诞树... ${Math.floor(progress)}%`}
+             {progress === 100 ? "点击开启圣诞之旅" : `正在搬运圣诞树... ${progress.toFixed(0)}%`}
           </div>
         </div>
       )}
