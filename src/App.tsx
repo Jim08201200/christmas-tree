@@ -19,7 +19,6 @@ import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tas
 
 // --- 动态生成照片列表 (top.jpg + 1.jpg 到 31.jpg) ---
 const TOTAL_NUMBERED_PHOTOS = 31;
-// 修改：将 top.jpg 加入到数组开头
 const bodyPhotoPaths = [
   './photos/top.jpg',
   ...Array.from({ length: TOTAL_NUMBERED_PHOTOS }, (_, i) => `./photos/${i + 1}.jpg`)
@@ -36,21 +35,18 @@ const CONFIG = {
     white: '#FFFFFF',   // 纯白色
     warmLight: '#FFD54F',
     lights: ['#FF0000', '#00FF00', '#0000FF', '#FFFF00'], // 彩灯
-    // 拍立得边框颜色池 (复古柔和色系)
     borders: ['#FFFAF0', '#F0E68C', '#E6E6FA', '#FFB6C1', '#98FB98', '#87CEFA', '#FFDAB9'],
-    // 圣诞元素颜色
     giftColors: ['#D32F2F', '#FFD700', '#1976D2', '#2E7D32'],
     candyColors: ['#FF0000', '#FFFFFF']
   },
   counts: {
     foliage: 15000,
-    ornaments: 300,   // 拍立得照片数量
-    elements: 200,    // 圣诞元素数量
-    lights: 400       // 彩灯数量
+    ornaments: 300,
+    elements: 200,
+    lights: 400
   },
-  tree: { height: 22, radius: 9 }, // 树体尺寸
+  tree: { height: 22, radius: 9 },
   photos: {
-    // top 属性不再需要，因为已经移入 body
     body: bodyPhotoPaths
   }
 };
@@ -124,7 +120,7 @@ const Foliage = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   );
 };
 
-// --- Component: Photo Ornaments (Double-Sided Polaroid) ---
+// --- Component: Photo Ornaments ---
 const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const textures = useTexture(CONFIG.photos.body);
   const count = CONFIG.counts.ornaments;
@@ -200,7 +196,6 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
     <group ref={groupRef}>
       {data.map((obj, i) => (
         <group key={i} scale={[obj.scale, obj.scale, obj.scale]} rotation={state === 'CHAOS' ? obj.chaosRotation : [0,0,0]}>
-          {/* 正面 */}
           <group position={[0, 0, 0.015]}>
             <mesh geometry={photoGeometry}>
               <meshStandardMaterial
@@ -214,7 +209,6 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
               <meshStandardMaterial color={obj.borderColor} roughness={0.9} metalness={0} side={THREE.FrontSide} />
             </mesh>
           </group>
-          {/* 背面 */}
           <group position={[0, 0, -0.015]} rotation={[0, Math.PI, 0]}>
             <mesh geometry={photoGeometry}>
               <meshStandardMaterial
@@ -251,7 +245,6 @@ const ChristmasElements = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       const rBase = CONFIG.tree.radius;
       const currentRadius = (rBase * (1 - (y + (h/2)) / h)) * 0.95;
       const theta = Math.random() * Math.PI * 2;
-
       const targetPos = new THREE.Vector3(currentRadius * Math.cos(theta), y, currentRadius * Math.sin(theta));
 
       const type = Math.floor(Math.random() * 3);
@@ -331,7 +324,7 @@ const FairyLights = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   );
 };
 
-// --- Component: Top Star (No Photo, Pure Gold 3D Star) ---
+// --- Component: Top Star ---
 const TopStar = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -349,16 +342,15 @@ const TopStar = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
 
   const starGeometry = useMemo(() => {
     return new THREE.ExtrudeGeometry(starShape, {
-      depth: 0.4, // 增加一点厚度
+      depth: 0.4,
       bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 3,
     });
   }, [starShape]);
 
-  // 纯金材质
   const goldMaterial = useMemo(() => new THREE.MeshStandardMaterial({
     color: CONFIG.colors.gold,
     emissive: CONFIG.colors.gold,
-    emissiveIntensity: 1.5, // 适中亮度，既发光又有质感
+    emissiveIntensity: 1.5,
     roughness: 0.1,
     metalness: 1.0,
   }), []);
@@ -398,10 +390,10 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
       <color attach="background" args={['#000300']} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
       
-<Environment 
-  files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/dikhololo_night_1k.hdr" 
-  background={false}
-/>
+      <Environment 
+        files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/dikhololo_night_1k.hdr" 
+        background={false}
+      />
       <ambientLight intensity={0.4} color="#003311" />
       <pointLight position={[30, 30, 30]} intensity={100} color={CONFIG.colors.warmLight} />
       <pointLight position={[-30, 10, -30]} intensity={50} color={CONFIG.colors.gold} />
@@ -426,13 +418,16 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
   );
 };
 
-// --- Gesture Controller ---
+// --- Gesture Controller (修改：增加 started 参数) ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
+const GestureController = ({ onGesture, onMove, onStatus, debugMode, started }: any) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // 🔴 关键修改：如果没点击开始，这里直接返回，不执行 AI 初始化
+    if (!started) return;
+
     let gestureRecognizer: GestureRecognizer;
     let requestRef: number;
 
@@ -497,7 +492,7 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
     };
     setup();
     return () => cancelAnimationFrame(requestRef);
-  }, [onGesture, onMove, onStatus, debugMode]);
+  }, [onGesture, onMove, onStatus, debugMode, started]); // 🔴 依赖项加入 started
 
   return (
     <>
@@ -510,15 +505,12 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
 // --- App Entry ---
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('FORMED');
-
-  // 获取资源加载进度 (0 到 100 的数字)
   const { progress } = useProgress();
-
-  
-    // 1. 定义一个“记忆”开关，默认是 false (没玩过)
   const [hasPlayed, setHasPlayed] = useState(false);
+  
+  // 🔴 关键修改：新增一个状态，标记是否已点击开始按钮
+  const [isStarted, setIsStarted] = useState(false);
 
-  // 2. 添加一个监听器：一旦树变成了 CHAOS (散开)，就永久把开关关掉
   useEffect(() => {
     if (sceneState === 'CHAOS') {
       setHasPlayed(true);
@@ -536,7 +528,15 @@ export default function GrandTreeApp() {
             <Experience sceneState={sceneState} rotationSpeed={rotationSpeed} />
         </Canvas>
       </div>
-      <GestureController onGesture={setSceneState} onMove={setRotationSpeed} onStatus={setAiStatus} debugMode={debugMode} />
+      
+      {/* 🔴 关键修改：将 isStarted 传递给 GestureController */}
+      <GestureController 
+        onGesture={setSceneState} 
+        onMove={setRotationSpeed} 
+        onStatus={setAiStatus} 
+        debugMode={debugMode} 
+        started={isStarted} 
+      />
 
       {/* UI - Stats */}
       <div style={{ position: 'absolute', bottom: '30px', left: '40px', color: '#888', zIndex: 10, fontFamily: 'sans-serif', userSelect: 'none' }}>
@@ -564,44 +564,34 @@ export default function GrandTreeApp() {
         </button>
       </div>
 
-
-      {/* ================= 提示文字 Start ================= */}
-      {/* 意思是：树是完整的 并且 还没玩过，才显示 */}
-{sceneState === 'FORMED' && !hasPlayed && (
+      {/* 提示文字 */}
+      {sceneState === 'FORMED' && !hasPlayed && isStarted && (
         <div
           style={{
             position: 'fixed',
-            top: '15%', // 放在屏幕上方 15% 的位置，正好在树顶
+            top: '15%', 
             left: '50%',
-            transform: 'translateX(-50%)', // 水平居中
-            zIndex: 50, // 保证文字浮在 3D 树上面
+            transform: 'translateX(-50%)', 
+            zIndex: 50, 
             color: '#fff',
             fontSize: '18px',
             fontWeight: 'bold',
-            textShadow: '0 2px 10px rgba(0,0,0,0.8)', // 加个黑色阴影，防止背景太亮看不清
-            pointerEvents: 'none', // 🔴 关键！让鼠标可以穿透文字去操作后面的树
+            textShadow: '0 2px 10px rgba(0,0,0,0.8)', 
+            pointerEvents: 'none', 
             textAlign: 'center',
             width: '90%',
-            animation: 'pulse 2s infinite' // 加个简单的呼吸灯动画效果
+            animation: 'pulse 2s infinite'
           }}
         >
           请右手握成拳头，然后对着摄像头张开五指
         </div>
       )}
-      {/* ================= 提示文字 End ================= */}
 
-
-
-
-      
-{/* ================= 音乐控制系统 Start ================= */}
-      
-      {/* 1. 隐藏的音频源 */}
+      {/* 音乐控制系统 */}
       <audio id="bgm" loop>
         <source src="./bgm.mp3" type="audio/mpeg" />
       </audio>
 
-      {/* 2. 左下角的常驻小按钮 (默认显示“暂停”状态，等大按钮点击后会变) */}
       <div
         id="mini-music-btn"
         style={{
@@ -639,7 +629,7 @@ export default function GrandTreeApp() {
         🎵 播放音乐
       </div>
 
-      {/* 3. 开场全屏大封面 (点击后自己消失) */}
+      {/* 开场全屏大封面 */}
       <div
         id="start-screen"
         style={{
@@ -648,14 +638,14 @@ export default function GrandTreeApp() {
           left: 0,
           width: '100vw',
           height: '100vh',
-          zIndex: 99999, // 保证在最最上层
-          background: 'rgba(0, 0, 0, 0.85)', // 深色背景遮罩
-          backdropFilter: 'blur(8px)', // 背景模糊
+          zIndex: 99999, 
+          background: 'rgba(0, 0, 0, 0.85)', 
+          backdropFilter: 'blur(8px)', 
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          transition: 'opacity 0.8s', // 消失时的淡出动画
+          transition: 'opacity 0.8s', 
         }}
       >
         
@@ -666,12 +656,10 @@ export default function GrandTreeApp() {
             fontSize: '3rem', 
             fontFamily: 'serif', 
             textShadow: '0 0 20px gold',
-            // 👇👇👇 新增这两行 👇👇👇
-            textAlign: 'center', // 强制文字水平居中
-            width: '100%',       // 占满整行宽度，防止被挤到一边
-            // 👆👆👆 新增这两行 👆👆👆
-            padding: '0 20px',   // 防止手机端字太大了贴边
-            lineHeight: '1.2'    // 调整一下行高更美观
+            textAlign: 'center', 
+            width: '100%',       
+            padding: '0 20px',   
+            lineHeight: '1.2'    
           }}
         >
           🎄 Merry Christmas
@@ -682,55 +670,5 @@ export default function GrandTreeApp() {
             padding: '15px 40px',
             fontSize: '24px',
             color: 'white',
-            border: progress === 100 ? '2px solid gold' : '2px solid #666', // 加载完是金色，没加载完是灰色
-            borderRadius: '50px',
-            cursor: progress === 100 ? 'pointer' : 'not-allowed', // 没加载完鼠标显示禁止符号
-            background: progress === 100 ? 'rgba(255, 215, 0, 0.2)' : 'rgba(0, 0, 0, 0.5)',
-            boxShadow: progress === 100 ? '0 0 30px rgba(255, 215, 0, 0.4)' : 'none',
-            userSelect: 'none',
-            transition: 'all 0.3s'
-          }}
-          onClick={(e) => {
-            // 🔴 关键判断：只有进度到了 100 才允许点击
-            if (progress < 100) return; 
-
-            // 下面是原来的播放逻辑，不用变
-            const audio = document.getElementById('bgm') as HTMLAudioElement;
-            audio.play().catch(() => console.log('Wait for interaction'));
-            
-            const miniBtn = document.getElementById('mini-music-btn');
-            if(miniBtn) {
-              miniBtn.innerHTML = '🎵 暂停音乐';
-              miniBtn.style.background = 'rgba(0, 255, 100, 0.2)';
-            }
-
-            const screen = document.getElementById('start-screen');
-            if(screen) {
-              screen.style.opacity = '0';
-              screen.style.pointerEvents = 'none';
-              setTimeout(() => {
-                screen.style.display = 'none';
-              }, 800);
-            }
-          }}
-          onMouseOver={(e) => {
-             if (progress === 100) e.currentTarget.style.background = 'rgba(255, 215, 0, 0.5)'
-          }}
-          onMouseOut={(e) => {
-             if (progress === 100) e.currentTarget.style.background = 'rgba(255, 215, 0, 0.2)'
-          }}
-        >
-          {/* 🔴 按钮文字也变成动态的 */}
-          {progress === 100 ? '🎁 点击开启圣诞之旅' : `⏳ 正在搬运圣诞树... ${progress.toFixed(0)}%`}
-        </div>
-        
-        <p style={{ color: '#aaa', marginTop: '20px', fontSize: '14px' }}>
-           戴上耳机体验最佳效果 🎧
-        </p>
-      </div>
-      
-      {/* ================= 音乐控制系统 End ================= */}
-      
-    </div>
-  );
-}
+            border: progress === 100 ? '2px solid gold' : '2px solid #666', 
+            borderRadius: '50
