@@ -41,7 +41,7 @@ const CONFIG = {
   },
   counts: {
     foliage: 15000,
-    ornaments: 150,
+    ornaments: 200,
     elements: 200,
     lights: 600
   },
@@ -186,7 +186,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       group.position.copy(objData.currentPos);
 
       if (isFormed) {
-         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 4.0, group.position.z * 2);
+         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 3.0, group.position.z * 2);
          group.lookAt(targetLookPos);
 
          const wobbleX = Math.sin(time * objData.wobbleSpeed + objData.wobbleOffset) * 0.05;
@@ -617,22 +617,21 @@ export default function GrandTreeApp() {
           
 onClick={handleStart} 
             style={{ 
-              padding: '15px 40px', 
-              fontSize: '24px', 
-              color: 'white', 
-              border: progress === 100 ? '2px solid gold' : '2px solid #666', 
-              borderRadius: '50px', 
-              cursor: progress === 100 ? 'pointer' : 'wait', 
-              
-              transition: 'all 0.3s', 
-              userSelect: 'none', 
-              
-
-            background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
-              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
+            
               
              
-              
+           padding: '15px 40px',
+              fontSize: '24px',
+              color: 'white',
+              border: progress === 100 ? '2px solid gold' : '2px solid #666',
+              borderRadius: '50px',
+              background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
+              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
+              cursor: progress === 100 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s',
+              opacity: progress === 100 ? 1 : 0.6,
+              marginTop: '20px',
+              userSelect: 'none'     
             
               
              
