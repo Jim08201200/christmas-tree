@@ -122,6 +122,7 @@ const Foliage = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
 };
 
 // --- Component: Photo Ornaments ---
+// --- Component: Photo Ornaments (已修复：照片底部多顶部少，且无报错) ---
 const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const textures = useTexture(CONFIG.photos.body);
   const count = CONFIG.counts.ornaments;
@@ -130,31 +131,34 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
   const borderGeometry = useMemo(() => new THREE.PlaneGeometry(1.2, 1.5), []);
   const photoGeometry = useMemo(() => new THREE.PlaneGeometry(1, 1), []);
 
- const data = useMemo(() => {
+  const data = useMemo(() => {
     return new Array(count).fill(0).map((_, i) => {
       const chaosPos = new THREE.Vector3((Math.random()-0.5)*70, (Math.random()-0.5)*70, (Math.random()-0.5)*70);
       
-      // --- 这里是修改后的核心算法 ---
       const h = CONFIG.tree.height;
       
-      // 1. 生成一个 0 到 1 之间的系数。
-      // Math.pow(..., 2.5) 这个指数越大，照片越集中在底部。
-      // 你可以调整 2.5 这个数字：(1.5 = 稍微集中底部, 3.0 = 极度集中底部)
-      const pct = Math.pow(Math.random(), 2.0); 
-      
-      // 2. 计算 Y 轴高度：0对应底部(-h/2)，1对应顶部(h/2)
-      const y = (pct * h) - (h / 2);
-      
-      // 3. 计算半径：底部(pct=0)最宽，顶部(pct=1)最窄
+      // --- 核心修改开始 ---
+      // 1. 计算归一化高度 (0代表底部，1代表顶部)
+      // 使用 Math.pow(..., 2.5) 让数值更倾向于 0 (底部)
+      // 数字越大(比如3.0)，底部的照片就越密集
+      const normalizedY = Math.pow(Math.random(), 2.2); 
+
+      // 2. 根据归一化高度计算实际 Y 坐标
+      const y = (normalizedY * h) - (h / 2);
+
+      // 3. 根据高度计算半径 (底部宽，顶部窄)
       const rBase = CONFIG.tree.radius;
-      const currentRadius = (rBase * (1 - pct)) + 0.5;
-      // ---------------------------
+      const currentRadius = (rBase * (1 - normalizedY)) + 0.5;
+      // --- 核心修改结束 ---
 
       const theta = Math.random() * Math.PI * 2;
       const targetPos = new THREE.Vector3(currentRadius * Math.cos(theta), y, currentRadius * Math.sin(theta));
 
+      // 越靠近顶部(normalizedY接近1)，照片稍微变小一点，避免太拥挤
       const isBig = Math.random() < 0.2;
-      const baseScale = isBig ? 2.2 : 0.8 + Math.random() * 0.6;
+      let baseScale = isBig ? 2.2 : 0.8 + Math.random() * 0.6;
+      baseScale = baseScale * (1 - normalizedY * 0.3); // 顶部照片缩小30%
+
       const weight = 0.8 + Math.random() * 1.2;
       const borderColor = CONFIG.colors.borders[Math.floor(Math.random() * CONFIG.colors.borders.length)];
 
@@ -191,7 +195,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       group.position.copy(objData.currentPos);
 
       if (isFormed) {
-         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 4.0, group.position.z * 2);
+         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 0.5, group.position.z * 2);
          group.lookAt(targetLookPos);
 
          const wobbleX = Math.sin(time * objData.wobbleSpeed + objData.wobbleOffset) * 0.05;
