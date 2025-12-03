@@ -18,7 +18,7 @@ import * as random from 'maath/random';
 import { GestureRecognizer, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
 // --- 动态生成照片列表 (top.jpg + 1.jpg 到 31.jpg) ---
-const TOTAL_NUMBERED_PHOTOS = 31;
+const TOTAL_NUMBERED_PHOTOS = 24;
 const bodyPhotoPaths = [
   './photos/top.jpg',
   ...Array.from({ length: TOTAL_NUMBERED_PHOTOS }, (_, i) => `./photos/${i + 1}.jpg`)
@@ -41,7 +41,7 @@ const CONFIG = {
   },
   counts: {
     foliage: 15000,
-    ornaments: 300,
+    ornaments: 100,
     elements: 200,
     lights: 400
   },
