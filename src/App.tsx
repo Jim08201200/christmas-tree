@@ -509,6 +509,17 @@ const GestureController = ({ onGesture, onMove, onStatus, debugMode }: any) => {
 // --- App Entry ---
 export default function GrandTreeApp() {
   const [sceneState, setSceneState] = useState<'CHAOS' | 'FORMED'>('FORMED');
+  
+    // 1. 定义一个“记忆”开关，默认是 false (没玩过)
+  const [hasPlayed, setHasPlayed] = useState(false);
+
+  // 2. 添加一个监听器：一旦树变成了 CHAOS (散开)，就永久把开关关掉
+  useEffect(() => {
+    if (sceneState === 'CHAOS') {
+      setHasPlayed(true);
+    }
+  }, [sceneState]);
+  
   const [rotationSpeed, setRotationSpeed] = useState(0);
   const [aiStatus, setAiStatus] = useState("INITIALIZING...");
   const [debugMode, setDebugMode] = useState(false);
@@ -548,6 +559,36 @@ export default function GrandTreeApp() {
         </button>
       </div>
 
+
+      {/* ================= 提示文字 Start ================= */}
+      {/* 意思是：树是完整的 并且 还没玩过，才显示 */}
+{sceneState === 'FORMED' && !hasPlayed && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '15%', // 放在屏幕上方 15% 的位置，正好在树顶
+            left: '50%',
+            transform: 'translateX(-50%)', // 水平居中
+            zIndex: 50, // 保证文字浮在 3D 树上面
+            color: '#fff',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            textShadow: '0 2px 10px rgba(0,0,0,0.8)', // 加个黑色阴影，防止背景太亮看不清
+            pointerEvents: 'none', // 🔴 关键！让鼠标可以穿透文字去操作后面的树
+            textAlign: 'center',
+            width: '90%',
+            animation: 'pulse 2s infinite' // 加个简单的呼吸灯动画效果
+          }}
+        >
+          请右手握成拳头，然后对着摄像头张开五指
+        </div>
+      )}
+      {/* ================= 提示文字 End ================= */}
+
+
+
+
+      
 {/* ================= 音乐控制系统 Start ================= */}
       
       {/* 1. 隐藏的音频源 */}
