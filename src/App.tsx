@@ -686,4 +686,25 @@ export default function GrandTreeApp() {
               padding: '15px 40px',
               fontSize: '24px',
               color: 'white',
-              border: progress === 100 ?
+
+
+              
+              border: progress === 100 ? '2px solid gold' : '2px solid #666',
+              borderRadius: '50px',
+              background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
+              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
+              cursor: progress === 100 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s',
+              opacity: progress === 100 ? 1 : 0.6,
+              marginTop: '20px',
+              userSelect: 'none'
+            }}
+            disabled={progress !== 100}
+          >
+            {progress === 100 ? '点击开启圣诞之旅' : `正在搬运圣诞树... ${Math.floor(progress)}%`}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
