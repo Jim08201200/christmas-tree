@@ -43,7 +43,7 @@ const CONFIG = {
     foliage: 15000,
     ornaments: 150,
     elements: 200,
-    lights: 500
+    lights: 600
   },
   tree: { height: 22, radius: 9 },
   photos: {
@@ -136,7 +136,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       // --- 修复后的分布算法 ---
       const h = CONFIG.tree.height;
       // 使用指数函数 Math.pow(random, 2.2) 让数值集中在 0 (底部)
-      const normalizedY = Math.pow(Math.random(), 2.2);
+      const normalizedY = Math.pow(Math.random(), 1.8);
       const y = (normalizedY * h) - (h / 2);
 
       const rBase = CONFIG.tree.radius;
@@ -609,7 +609,7 @@ export default function GrandTreeApp() {
       {!isStarted && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(10px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', transition: 'opacity 0.5s' }}>
           <h1 style={{ color: 'white', marginBottom: '40px', fontSize: '3rem', fontFamily: 'serif', textShadow: '0 0 20px gold', textAlign: 'center', width: '100%', padding: '0 20px', lineHeight: '1.2' }}>
-            🎄 Merry Christmas
+            🎄 宝宝 Merry Christmas
           </h1>
           
           {/* 按钮区域 */}
@@ -619,7 +619,7 @@ onClick={handleStart}
             style={{ 
               padding: '15px 40px', 
               fontSize: '24px', 
-              color: 'black', 
+              color: 'white', 
               border: progress === 100 ? '2px solid gold' : '2px solid #666', 
               borderRadius: '50px', 
               cursor: progress === 100 ? 'pointer' : 'wait', 
