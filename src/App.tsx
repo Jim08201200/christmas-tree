@@ -41,7 +41,7 @@ const CONFIG = {
   },
   counts: {
     foliage: 15000,
-    ornaments: 100,
+    ornaments: 200,
     elements: 200,
     lights: 400
   },
@@ -522,19 +522,28 @@ export default function GrandTreeApp() {
   const [aiStatus, setAiStatus] = useState("INITIALIZING...");
   const [debugMode, setDebugMode] = useState(false);
 
-  // 处理点击开始的逻辑
-  const handleStart = () => {
+// --- 找到这一段 handleStart，完全替换为下面这样 ---
+const handleStart = () => {
     if (progress === 100) {
-      // 1. 隐藏封面（这里简单处理，直接通过状态移除，如果想要淡出效果可以用样式控制）
       setIsStarted(true);
-      
-      // 2. 尝试自动播放音乐（部分浏览器可能仍需用户交互）
       const audio = document.getElementById('bgm') as HTMLAudioElement;
       if (audio) {
-        audio.play().catch(e => console.log("Autoplay blocked", e));
+        audio.play().catch(() => {});
+        
+        // --- 新增：强制修改按钮文案和样式 ---
+        const btn = document.getElementById('mini-music-btn');
+        if (btn) {
+          btn.innerHTML = '🎵 暂停音乐';
+          btn.style.background = 'rgba(0, 255, 100, 0.2)';
+        }
       }
     }
   };
+
+
+
+
+  
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', position: 'relative', overflow: 'hidden' }}>
@@ -571,9 +580,7 @@ export default function GrandTreeApp() {
 
       {/* UI - 右下角按钮 */}
       <div style={{ position: 'absolute', bottom: '30px', right: '40px', zIndex: 10, display: 'flex', gap: '10px' }}>
-        <button onClick={() => setDebugMode(!debugMode)} style={{ padding: '12px 15px', backgroundColor: debugMode ? '#FFD700' : 'rgba(0,0,0,0.5)', border: '1px solid #FFD700', color: debugMode ? '#000' : '#FFD700', fontFamily: 'sans-serif', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
-           {debugMode ? 'HIDE DEBUG' : '🛠 DEBUG'}
-        </button>
+        
         <button onClick={() => setSceneState(s => s === 'CHAOS' ? 'FORMED' : 'CHAOS')} style={{ padding: '12px 30px', backgroundColor: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255, 215, 0, 0.5)', color: '#FFD700', fontFamily: 'serif', fontSize: '14px', fontWeight: 'bold', letterSpacing: '3px', textTransform: 'uppercase', cursor: 'pointer', backdropFilter: 'blur(4px)' }}>
            {sceneState === 'CHAOS' ? 'Assemble Tree' : 'Disperse'}
         </button>
