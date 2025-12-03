@@ -186,7 +186,7 @@ const PhotoOrnaments = ({ state }: { state: 'CHAOS' | 'FORMED' }) => {
       group.position.copy(objData.currentPos);
 
       if (isFormed) {
-         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 0.5, group.position.z * 2);
+         const targetLookPos = new THREE.Vector3(group.position.x * 2, group.position.y + 4.0, group.position.z * 2);
          group.lookAt(targetLookPos);
 
          const wobbleX = Math.sin(time * objData.wobbleSpeed + objData.wobbleOffset) * 0.05;
@@ -614,18 +614,23 @@ export default function GrandTreeApp() {
           
           {/* 按钮区域 */}
           <div 
-            onClick={handleStart} 
-            style={{ 
-              padding: '15px 40px', 
-              fontSize: '24px', 
-              color: 'white', 
-              border: progress === 100 ? '2px solid gold' : '2px solid #666', 
-              borderRadius: '50px', 
-              cursor: progress === 100 ? 'pointer' : 'wait', 
-              background: progress === 100 ? 'rgba(255, 215, 0, 0.2)' : 'transparent', 
-              transition: 'all 0.3s', 
-              userSelect: 'none', 
-              boxShadow: progress === 100 ? '0 0 30px rgba(255, 215, 0, 0.6)' : 'none' 
+          
+
+onClick={handleStart}
+            style={{
+              border: progress === 100 ? '2px solid gold' : '2px solid #666',
+              borderRadius: '50px',
+              background: progress === 100 ? 'gold' : 'rgba(50,50,50,0.6)',
+              boxShadow: progress === 100 ? '0 0 30px gold' : 'none',
+              cursor: progress === 100 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s',
+              opacity: progress === 100 ? 1 : 0.6,
+              marginTop: '20px',
+              userSelect: 'none',
+              fontSize: '24px',
+              color: 'black'
+
+              
             }}
           >
              {progress === 100 ? "点击开启圣诞之旅" : `正在搬运圣诞树... ${progress.toFixed(0)}%`}
