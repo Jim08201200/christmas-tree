@@ -43,7 +43,7 @@ const CONFIG = {
     foliage: 15000,
     ornaments: 200,
     elements: 200,
-    lights: 500
+    lights: 600
   },
   tree: { height: 22, radius: 9 },
   photos: {
@@ -399,7 +399,7 @@ const Experience = ({ sceneState, rotationSpeed }: { sceneState: 'CHAOS' | 'FORM
       <pointLight position={[-30, 10, -30]} intensity={50} color={CONFIG.colors.gold} />
       <pointLight position={[0, -20, 10]} intensity={30} color="#ffffff" />
 
-      <group position={[0, -1, 0]}>
+      <group position={[0, -3, 0]}>
         <Foliage state={sceneState} />
         <Suspense fallback={null}>
            <PhotoOrnaments state={sceneState} />
